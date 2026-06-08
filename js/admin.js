@@ -395,14 +395,14 @@ function renderEmployees(data) {
     const statusCls = emp.status === 'On Leave' ? 'chip-amber' : 'chip-green';
     const remColor  = remaining === 0 ? 'var(--red)' : remaining <= 1 ? 'var(--amber)' : 'var(--green)';
 
-    return `<tr>
-      <td><div class="employee-cell">
+    return `<tr class="emp-row">
+      <td data-label="Employee"><div class="employee-cell">
         <div class="emp-avatar">${getInitials(emp.name)}</div>
         <span class="emp-name">${emp.name}</span>
         ${isOver ? '<span class="emp-flag">Over quota</span>' : ''}
       </div></td>
-      <td><span class="chip ${statusCls}">${emp.status || 'Present'}</span></td>
-      <td>
+      <td data-label="Status"><span class="chip ${statusCls}">${emp.status || 'Present'}</span></td>
+      <td data-label="Leave Usage">
         <div class="leave-bar-wrap">
           <div class="leave-bar-bg">
             <div class="leave-bar-fill ${isOver ? 'over' : ''}" style="width:${barPct}%"></div>
@@ -410,7 +410,7 @@ function renderEmployees(data) {
           <span class="leave-bar-text">${used}/4</span>
         </div>
       </td>
-      <td style="font-weight:600;color:${remColor}">${remaining}</td>
+      <td data-label="Remaining" style="font-weight:600;color:${remColor}">${remaining}</td>
     </tr>`;
   }).join('');
 }
@@ -482,15 +482,15 @@ function renderAttendance(data) {
   tbody.innerHTML = attendance.map(a => {
     const pct  = a.attendancePct ?? 100;
     const chip = pct >= 90 ? 'chip-green' : pct >= 75 ? 'chip-amber' : 'chip-red';
-    return `<tr>
-      <td><div class="employee-cell">
+    return `<tr class="att-row">
+      <td data-label="Employee"><div class="employee-cell">
         <div class="emp-avatar">${getInitials(a.employeeName)}</div>
         <span>${a.employeeName}</span>
       </div></td>
-      <td style="font-weight:500">${a.workingDays}</td>
-      <td style="color:var(--green);font-weight:600">${a.presentDays}</td>
-      <td style="color:var(--amber);font-weight:600">${a.leaveDays}</td>
-      <td><span class="chip ${chip}">${pct}%</span></td>
+      <td data-label="Working Days" style="font-weight:500">${a.workingDays}</td>
+      <td data-label="Present" style="color:var(--green);font-weight:600">${a.presentDays}</td>
+      <td data-label="On Leave" style="color:var(--amber);font-weight:600">${a.leaveDays}</td>
+      <td data-label="Attendance %"><span class="chip ${chip}">${pct}%</span></td>
     </tr>`;
   }).join('');
 }

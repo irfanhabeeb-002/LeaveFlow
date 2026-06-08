@@ -48,7 +48,12 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  overflow-x: hidden;    /* global horizontal overflow kill-switch */
+  max-width: 100%;
+}
 
 body {
   font-family: 'Inter', -apple-system, sans-serif;
@@ -76,6 +81,8 @@ body::before {
   min-height: 100dvh;
   position: relative;
   z-index: 1;
+  overflow-x: hidden;   /* prevent any child from causing horizontal scroll */
+  max-width: 100%;
 }
 
 /* ── Sidebar ───────────────────────────────────────── */
@@ -431,7 +438,9 @@ body::before {
 .table-filter:focus { border-color: var(--indigo); }
 
 .table-wrap {
-  overflow-x: auto;
+  overflow-x: auto;        /* desktop: allow scroll if truly needed */
+  max-width: 100%;         /* never wider than container */
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -464,7 +473,10 @@ tbody td {
   padding: var(--sp-4) var(--sp-6);
   font-size: 0.88rem;
   color: var(--text-primary);
-  white-space: nowrap;
+  white-space: nowrap;     /* desktop: keep on one line */
+  max-width: 0;            /* allow td to shrink if table is too wide */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Chips / badges ─────────────────────────────────────── */
@@ -940,4 +952,265 @@ tbody td {
 
 .modal-actions .btn {
   flex: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE CARD TRANSFORMATION  (≤ 768px)
+   Tables for Team Members and Attendance become stacked cards.
+   The ::before pseudo-element reads data-label from each <td> to
+   render the column name as an inline label inside the card row.
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Global table overflow kill ──────────────────────────────── */
+  .table-wrap {
+    overflow-x: hidden !important;  /* no horizontal scroll on mobile */
+  }
+
+  /* ── Reset td white-space so text wraps in cards ─────────────── */
+  tbody td {
+    white-space: normal !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     TEAM MEMBERS — card layout
+  ═══════════════════════════════════════════════════════════════ */
+  #panel-employees thead {
+    display: none;           /* hide column headers; labels come from ::before */
+  }
+
+  #panel-employees tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+  }
+
+  /* Each row = a card */
+  #panel-employees tbody tr.emp-row {
+    display: block;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 0;
+    overflow: hidden;
+    transition: border-color var(--dur-fast);
+  }
+
+  #panel-employees tbody tr.emp-row:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+  }
+
+  /* Employee name cell = card header stripe */
+  #panel-employees tbody tr.emp-row td[data-label="Employee"] {
+    display: block;
+    padding: var(--sp-4) var(--sp-4) var(--sp-3);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  #panel-employees tbody tr.emp-row td[data-label="Employee"]::before {
+    display: none;   /* no label for the name row — it IS the header */
+  }
+
+  #panel-employees tbody tr.emp-row td[data-label="Employee"] .employee-cell {
+    gap: var(--sp-3);
+  }
+
+  #panel-employees tbody tr.emp-row td[data-label="Employee"] .emp-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+
+  /* Data rows inside card: label on left, value on right */
+  #panel-employees tbody tr.emp-row td:not([data-label="Employee"]) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-2) var(--sp-4);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  #panel-employees tbody tr.emp-row td:not([data-label="Employee"]):last-child {
+    border-bottom: none;
+  }
+
+  /* Inject column label from data-label attribute */
+  #panel-employees tbody tr.emp-row td:not([data-label="Employee"])::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    margin-right: var(--sp-3);
+  }
+
+  /* Leave bar expands to fill available space in card row */
+  #panel-employees tbody tr.emp-row td[data-label="Leave Usage"] .leave-bar-wrap {
+    min-width: 0;
+    flex: 1;
+    max-width: 160px;
+  }
+
+  #panel-employees tbody tr.emp-row td[data-label="Leave Usage"] .leave-bar-bg {
+    flex: 1;
+    min-width: 60px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     ATTENDANCE — card layout
+  ═══════════════════════════════════════════════════════════════ */
+  #panel-attendance thead {
+    display: none;
+  }
+
+  #panel-attendance tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+  }
+
+  /* Each row = a card */
+  #panel-attendance tbody tr.att-row {
+    display: block;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition: border-color var(--dur-fast);
+  }
+
+  #panel-attendance tbody tr.att-row:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+  }
+
+  /* Employee name = card header */
+  #panel-attendance tbody tr.att-row td[data-label="Employee"] {
+    display: block;
+    padding: var(--sp-4) var(--sp-4) var(--sp-3);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  #panel-attendance tbody tr.att-row td[data-label="Employee"]::before {
+    display: none;
+  }
+
+  /* Stats grid inside the card — 2×2 grid for the 4 data columns */
+  #panel-attendance tbody tr.att-row td:not([data-label="Employee"]) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--sp-2) var(--sp-4);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  #panel-attendance tbody tr.att-row td:not([data-label="Employee"]):last-child {
+    border-bottom: none;
+    padding-bottom: var(--sp-3);
+  }
+
+  #panel-attendance tbody tr.att-row td:not([data-label="Employee"])::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    margin-right: var(--sp-3);
+  }
+
+  /* ── Shared: employee cell in card header ──────────────────── */
+  #panel-employees td[data-label="Employee"] .employee-cell,
+  #panel-attendance td[data-label="Employee"] .employee-cell {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  #panel-employees td[data-label="Employee"] .emp-name,
+  #panel-attendance td[data-label="Employee"] span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 100px);
+  }
+
+  /* ── Admin panel padding on mobile ────────────────────────── */
+  #panel-employees.admin-panel,
+  #panel-attendance.admin-panel {
+    padding: var(--sp-3) 0;   /* zero horizontal padding — cards handle it */
+    gap: 0;
+  }
+
+  /* ── Table section card container ──────────────────────────── */
+  #panel-employees .table-section,
+  #panel-attendance .table-section {
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  #panel-employees .table-wrap,
+  #panel-attendance .table-wrap {
+    overflow: hidden;    /* no scroll — cards are full width */
+  }
+
+  /* ── Table header (title row) ──────────────────────────────── */
+  #panel-employees .table-header,
+  #panel-attendance .table-header {
+    padding: var(--sp-4) var(--sp-4);
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  #panel-employees .table-title,
+  #panel-attendance .table-title {
+    font-size: 0.9rem;
+  }
+
+  /* Add Member button in Team Members header — full width on very small screens */
+  @media (max-width: 400px) {
+    #panel-employees .table-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    #panel-employees .table-actions {
+      width: 100%;
+    }
+    #panel-employees #add-member-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+/* ── Additional overflow guards for all panels at all widths ── */
+.admin-panel {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.table-section {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.admin-main {
+  min-width: 0;     /* flex child must be allowed to shrink */
+  max-width: 100%;
 }
