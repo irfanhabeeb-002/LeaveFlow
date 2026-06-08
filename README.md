@@ -1,281 +1,295 @@
 <div align="center">
 
-<img src="icons/icon-192.png" alt="LeaveFlow Logo" width="96" height="96"/>
+<img src="icons/icon-192.png" alt="LeaveFlow Logo" width="96" height="96" />
 
-# LeaveFlow
+# LeaveFlow — Official PWA
 
-**Mobile-first PWA leave tracker for small teams**
+**A production-grade Progressive Web App for zero-friction team leave tracking.**
 
-[![Deploy to GitHub Pages](https://github.com/irfanhabeeb-002/LeaveFlow/actions/workflows/deploy.yml/badge.svg)](https://github.com/irfanhabeeb-002/LeaveFlow/actions/workflows/deploy.yml)
+[![Deploy to GitHub Pages](https://github.com/irfanhabeeb-002/LeaveFlow/actions/workflows/deploy.yml/badge.svg)](https://github.com/irfanhabeeb-002/LeaveFlow/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/irfanhabeeb-002/LeaveFlow/pulls)
-
-[🌐 Live Demo](https://irfanhabeeb-002.github.io/LeaveFlow/) · [🔧 Admin Panel](https://irfanhabeeb-002.github.io/LeaveFlow/admin.html) · [📐 Architecture](ARCHITECTURE.md)
+[![Google Apps Script](https://img.shields.io/badge/Backend-Apps_Script-4285F4?logo=google)](https://developers.google.com/apps-script)
+[![Google Sheets](https://img.shields.io/badge/Database-Sheets-34A853?logo=googlesheets)](https://google.com/sheets)
+[![Live](https://img.shields.io/badge/Live-LeaveFlow-1C7C54)](https://irfanhabeeb-002.github.io/LeaveFlow/)
 
 </div>
 
 ---
 
-## What is LeaveFlow?
+## Overview
 
-LeaveFlow is a **zero-friction, installable PWA** for tracking employee leaves across a small team. It runs entirely on **Google Sheets as a database** with a **Google Apps Script** serverless backend — no monthly server costs, no complex infrastructure.
+LeaveFlow is a **zero-friction, installable PWA** designed for tracking employee leaves across small teams. It operates on a **"Present by Default"** philosophy — employees are assumed present every working day and only open the app to record an absence. 
 
-The core idea is **"Present by Default"**: employees are assumed present every working day. They only open the app when they want to record a leave. Admins get a real-time dashboard with attendance summaries, leave history, and team status — all updated live from the same Google Sheet.
+It runs entirely on **Google Sheets as a database** with a **Google Apps Script** serverless backend. This means zero monthly server costs, no complex infrastructure, and data that is always accessible and exportable.
+
+**Target Users:**
+- **Employees** seeking a fast, 3-second leave recording process directly from their home screen.
+- **Administrators** managing attendance, tracking monthly quotas, and viewing real-time team status through a protected dashboard.
 
 ---
 
-## ✨ Features
+## Features
 
-### Employee App (`/`)
-| Feature | Description |
+### 📱 Employee App
+- **Directory Verification** — Only admin-registered employees can log in. No self-signup allowed.
+- **One-Tap Leave Recording** — Select a date, confirm, and the leave is recorded instantly.
+- **Live Balance Ring** — A premium, dynamic circular progress indicator showing leaves remaining versus used.
+- **Monthly Quota Tracking** — Tracks 4 leaves/month, automatically resetting on the 1st of every month via an Apps Script scheduled trigger.
+- **Offline Support** — Leaves are queued locally in `localStorage` and synced automatically when the device reconnects to the internet.
+- **Duplicate Prevention** — Both client and server strictly block submitting a leave for the same date twice.
+- **Session Logout** — One-tap logout clears all local state, requiring a fresh server fetch on the next login.
+
+### 🛠️ Admin Dashboard
+- **Team Members Panel** — View all employees with visual leave usage bars and exact remaining balances. Mobile-optimized card layout.
+- **Leave History** — Full filterable log of all leaves by employee and month.
+- **Attendance Summary** — Automatically computed working days, present count, leave count, and attendance percentage per employee.
+- **Over-Quota Alerts** — Distinct alerts highlighting employees who have exceeded their monthly quota.
+- **Month Navigation** — Browse historical data month-by-month to audit past records.
+- **Member Management** — Add new employees directly from the dashboard, granting them immediate login access.
+- **Real-time Refresh** — Force-pull the latest data from Google Sheets instantly without reloading the page.
+
+### ⚡ Performance & Caching
+- **Two-Tier Architecture** — Fast client-side rendering with asynchronous server validation.
+- **Service Worker Caching** — Aggressive caching of static assets (HTML, CSS, JS, Icons) for instant load times.
+- **Stale-While-Revalidate** — HTML documents are served instantly from cache while fresh copies are fetched in the background to prevent blank screens.
+- **Data Caching** — Employee state is cached in `localStorage` with a 5-minute TTL to reduce network round-trips.
+
+### 📲 PWA Capabilities
+- **Installable** — Add to home screen on iOS and Android for a native app experience.
+- **Standalone Mode** — Runs without browser chrome (URL bar, navigation buttons) for full immersion.
+- **App Icons** — Includes standard and maskable variants (192px, 512px) for perfect OS integration.
+- **Auto-Update System** — CI/CD injects a build timestamp into the service worker, forcing clients to seamlessly update caches when new code is deployed.
+
+---
+
+## App Structure
+
+```
+LeaveFlow App
+├── 🏠 Employee App (index.html)
+│   ├── Login / Onboarding Screen
+│   ├── Home Dashboard
+│   │   ├── Greeting & Live Date
+│   │   ├── Live Balance Ring
+│   │   ├── Quick "Take Leave" Action
+│   │   └── Recent Leaves List
+│   └── Success & Offline Sync Toasts
+│
+└── 🛠️ Admin Dashboard (admin.html)
+    ├── Mobile Bottom Navigation & Desktop Sidebar
+    ├── 📊 Overview
+    │   ├── Over-quota Alerts
+    │   ├── Metric Cards (Total, On Leave Today, Avg Balance)
+    │   └── Employees on Leave Today (Table)
+    ├── 👥 Team Members
+    │   └── Employee specific usages & balances (Responsive Cards)
+    ├── 📋 Leave History
+    │   └── Filterable chronological log of all leaves
+    └── 📅 Attendance
+        └── Monthly summary with percentage calculations
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
 |---|---|
-| 🔐 Directory verification | Only admin-registered employees can log in — no self-signup |
-| 📅 One-tap leave recording | Select a date, confirm — done in under 3 seconds |
-| 📊 Live balance ring | Visual circular indicator showing leaves remaining vs used |
-| 🗓 Monthly quota tracking | 4 leaves/month, auto-resets on the 1st via scheduled trigger |
-| 📶 Offline support | Leaves queued locally and synced automatically when back online |
-| ✅ Duplicate prevention | Client + server both block submitting leave for the same date twice |
-| 📱 Installable PWA | Add to home screen on Android/iOS — works like a native app |
-| 🔄 Auto-update | Service worker detects new versions and notifies users silently |
-| 🚪 Session logout | Clears all local state; fresh server fetch on next login |
-
-### Admin Dashboard (`/admin.html`)
-| Feature | Description |
-|---|---|
-| 👥 Team Members panel | All employees with leave usage bars and remaining balance |
-| 📋 Leave History | Full filterable log of all leaves by employee and month |
-| 📅 Attendance Summary | Working days, present count, leave count, and % per employee |
-| 🔔 Over-quota alerts | Highlights employees who have exceeded their monthly quota |
-| 🗃 Month navigation | Browse previous months to audit history |
-| ➕ Add Member | Register new employees directly from the dashboard |
-| 🔁 Refresh button | Force-pulls latest data from the Google Sheet live |
+| Frontend Framework | Vanilla HTML, CSS, JavaScript (ES2020+) |
+| Styling | Custom CSS — Glassmorphism, CSS variables, dark mode |
+| PWA | Web App Manifest + Service Worker |
+| Backend | Google Apps Script (Serverless, free tier) |
+| Database | Google Sheets (Employees, LeaveRecords, Attendance) |
+| Hosting | GitHub Pages (Static) |
+| CI/CD | GitHub Actions |
+| Dev Environment | Node.js / Python 3 (Zero dependencies) |
 
 ---
 
-## 🏗 Architecture Overview
+## Architecture Overview
 
-> See the full detailed breakdown → **[ARCHITECTURE.md](ARCHITECTURE.md)**
+```text
+┌─────────────────────────────────────────────────────────┐
+│                      Client (PWA)                       │
+│  index.html (Employee)         admin.html (Admin)       │
+│  app.js                        admin.js                 │
+├─────────────────────────────────────────────────────────┤
+│                    Network Layer                        │
+│  api.js (HTTPS GET, cache-busting, timeout handling)    │
+├─────────────────────────────────────────────────────────┤
+│                     Backend API                         │
+│  Google Apps Script (Code.gs)                           │
+│  Handles dedup, computations, and sheet operations      │
+├──────────────────────────┬──────────────────────────────┤
+│     Data Storage         │          Triggers            │
+│  Google Sheets           │   Monthly Quota Reset        │
+└──────────────────────────┴──────────────────────────────┘
+```
 
-```
-Browser (PWA)
-│
-├── index.html  →  Employee App (app.js)
-│                   └─ reads/writes via api.js
-├── admin.html  →  Admin Dashboard (admin.js)
-│                   └─ reads via api.js
-│
-└── api.js  ──────────────────────────────────────────────────►  Google Apps Script Web App
-                      (HTTPS GET requests, cache: no-store)          │
-                                                                      └─►  Google Sheet
-                                                                             ├── Employees
-                                                                             ├── LeaveRecords
-                                                                             └── Attendance
-```
+**Data Flow:**
+1. **Login:** Employee enters name → API verifies against `Employees` sheet → Session created in `localStorage`.
+2. **Submit Leave:** Employee selects date → API receives request → Validates duplicate → Appends to `LeaveRecords` → Updates `Attendance` → Recomputes balances → Updates `Employees` sheet.
+3. **Offline Mode:** Leave is queued in `localStorage` → `sync` event or `online` listener triggers background submission when connection is restored.
+4. **Admin Dashboard:** Admin loads dashboard → API queries all sheets → Server computes dynamic monthly aggregations → JSON payload returned to client.
 
 ---
 
-## 📁 Project Structure
+## Database Schema (Google Sheets)
 
-```
-LeaveFlow/
-├── index.html              # Employee PWA entry point
-├── admin.html              # Admin Dashboard
-├── manifest.json           # PWA manifest (name, icons, theme)
-├── sw.js                   # Service Worker (offline caching + auto-update)
-├── build.js                # CI build script — injects API URL into config.js
-├── serve.js                # Local dev server (Node.js, zero dependencies)
-├── serve.py                # Local dev server (Python 3, zero dependencies)
-├── package.json            # npm scripts
-├── requirements.txt        # Python environment documentation
-├── .env                    # Local secrets — gitignored
-├── .env.example            # Template for .env
-├── .gitignore
-│
-├── backend/
-│   └── Code.gs             # Google Apps Script — all server-side logic
-│
-├── css/
-│   ├── style.css           # Employee app styles (glassmorphism, dark mode)
-│   └── admin.css           # Admin dashboard styles
-│
-├── js/
-│   ├── config.js           # Auto-generated at build time — holds API URL
-│   ├── api.js              # HTTP client for Apps Script backend
-│   ├── app.js              # Employee app logic & state
-│   └── admin.js            # Admin dashboard logic & rendering
-│
-├── icons/                  # PWA icons (192×192, 512×512, maskable)
-│
-└── .github/
-    └── workflows/
-        └── deploy.yml      # GitHub Actions CI/CD → GitHub Pages
-```
+### `Employees` (Directory & Mirrors)
+- **Name:** String (Primary Key)
+- **LeavesRemaining:** Integer (Dynamic mirror, recomputed by backend)
+- **LeavesUsed:** Integer (Dynamic mirror, recomputed by backend)
+- **Status:** String ("Present" or "On Leave")
+
+### `LeaveRecords` (Source of Truth)
+- **Date:** String (YYYY-MM-DD, stored as text)
+- **EmployeeName:** String (Foreign Key to Employees)
+- **LeaveType:** String (Currently "Leave")
+
+### `Attendance` (Monthly Summaries)
+- **Date:** String (YYYY-MM-DD)
+- **EmployeeName:** String
+- **AttendanceStatus:** String ("Present" or "On Leave")
 
 ---
 
-## 🚀 Setup & Deployment
+## Security
 
-### Step 1 — Create the Google Sheet
-
-1. Go to [sheets.google.com](https://sheets.google.com) and create a blank spreadsheet.
-2. Name it **LeaveFlow** (optional, for clarity).
-3. Copy the **Spreadsheet ID** from the URL bar:
-   ```
-   https://docs.google.com/spreadsheets/d/▶SPREADSHEET_ID◀/edit
-   ```
+- **No Self-Registration:** Employees can only log in if the Admin has added their exact name to the `Employees` sheet.
+- **Write Validation:** The backend automatically deduplicates `(EmployeeName, Date)` pairs to prevent double-charging quotas.
+- **No Passwords:** Authentication is name-based directory lookup. This is designed for small, high-trust internal teams.
+- **Stateless Backend:** Google Apps Script serves as a stateless API gateway; all authorization is based on the provided parameters mapped to the Sheets data.
 
 ---
 
-### Step 2 — Deploy the Apps Script Backend
+## Setup & Development
 
-1. In your Google Sheet: **Extensions → Apps Script**
-2. Delete the default code. Paste the full contents of [`backend/Code.gs`](backend/Code.gs).
-3. Set your Spreadsheet ID at the top:
-   ```js
-   SPREADSHEET_ID: 'PASTE_YOUR_SPREADSHEET_ID_HERE',
-   ```
-4. Run one-time setup functions:
-   - Select **`setupSheets`** from the dropdown → click ▶ Run  
-     *(Creates the Employees, LeaveRecords, and Attendance sheets with proper formats)*
-   - Select **`createMonthlyResetTrigger`** → click ▶ Run  
-     *(Schedules auto-reset of leave balances on the 1st of every month)*
-5. Deploy as a Web App:
-   - **Deploy → New deployment → Web app**
+### Prerequisites
+- Node.js (for local dev server and build scripts)
+- A Google Account (to host the Sheets database and Apps Script backend)
+
+### Step 1 — Database Setup
+1. Go to [sheets.google.com](https://sheets.google.com) and create a blank spreadsheet named **LeaveFlow**.
+2. Copy the **Spreadsheet ID** from the URL bar (`https://docs.google.com/spreadsheets/d/▶SPREADSHEET_ID◀/edit`).
+
+### Step 2 — Backend Deployment
+1. In your Google Sheet, navigate to **Extensions → Apps Script**.
+2. Delete the default code and paste the full contents of `backend/Code.gs`.
+3. Set your Spreadsheet ID at the top: `SPREADSHEET_ID: 'YOUR_ID_HERE'`.
+4. Select `setupSheets` from the function dropdown and click **Run** (creates the required tables).
+5. Select `createMonthlyResetTrigger` and click **Run** (schedules the 1st-of-month quota reset).
+6. Click **Deploy → New deployment → Web app**.
    - Execute as: **Me**
    - Who has access: **Anyone**
-   - Click **Deploy** → grant permissions → **copy the Web App URL**
+7. Copy the generated **Web App URL**. *(Note: Always deploy a "New version" when updating Code.gs)*.
 
-> ⚠️ Every time you update `Code.gs`, click **Deploy → Manage deployments → ✏ Edit → New version → Deploy** to apply changes.
-
----
-
-### Step 3 — Add Team Members
-
-Before employees can log in, they must be registered by the admin:
-
-- Open the **Admin Dashboard** (`/admin.html`)
-- Click **➕ Add Member** in the Team Members panel
-- Enter the employee's full name and save
-
-Alternatively, manually add their name to the **Employees** sheet in Google Sheets.
-
----
-
-### Step 4 — Run Locally
-
-Clone the repo and create your `.env`:
-
+### Step 3 — Local Development
 ```bash
 git clone https://github.com/irfanhabeeb-002/LeaveFlow.git
 cd LeaveFlow
 cp .env.example .env
 ```
-
-Edit `.env`:
+Edit `.env` and add your Web App URL:
 ```env
-LEAVEFLOW_API_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+LEAVEFLOW_API_URL=https://script.google.com/macros/s/.../exec
 ```
-
-Then start the dev server:
-
+Start the zero-dependency dev server:
 ```bash
-# Node.js (recommended — no npm install needed)
 npm start
-
-# OR Python 3
-python3 serve.py
 ```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-The local server automatically reads `.env`, generates `js/config.js` with the API URL injected, and serves the app.
+Open `http://localhost:3000`. The server automatically injects your API URL into `js/config.js`.
 
 ---
 
-## 🌐 Production Deployment
+## CI/CD Pipeline
 
-LeaveFlow must be served over **HTTPS** for the Service Worker (offline mode, PWA install) to work.
+GitHub Actions automatically handles production builds and cache invalidation on every push to `main`.
 
-### Option A — GitHub Pages (Recommended, Automated)
-
-1. Push your repo to GitHub.
-2. Go to **Settings → Secrets and variables → Actions → New repository secret**:
-   - Name: `LEAVEFLOW_API_URL`
-   - Value: your GAS Web App URL
-3. Go to **Settings → Pages → Source → GitHub Actions**
-4. Push to `main` — the CI/CD pipeline deploys automatically.
-
-Every push triggers the workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) which:
-- Injects `LEAVEFLOW_API_URL` into `js/config.js`
-- Stamps a new cache version in `sw.js` (forces PWA update for users)
-- Publishes to GitHub Pages
-
----
-
-### Option B — Netlify / Vercel / Cloudflare Pages
-
-1. Connect your GitHub repo to the platform.
-2. Set build settings:
-   - **Build command:** `npm run build`
-   - **Publish directory:** `.` (root)
-3. Add environment variable:
-   - Key: `LEAVEFLOW_API_URL`  
-   - Value: your GAS Web App URL
-4. Deploy — every future push auto-deploys and the PWA updates silently for users.
-
----
-
-## 🔄 PWA Auto-Update Flow
-
-When you push code changes:
-
-```
-git push main
+```text
+Push to main
     │
     ▼
-GitHub Actions runs build.js
-    │  ├─ Writes js/config.js  (API URL)
-    │  └─ Stamps new CACHE_NAME in sw.js  (e.g. leaveflow-v1717852800)
+✅ Checkout code
     │
     ▼
-GitHub Pages publishes updated files
+📦 Setup Node.js 20
     │
     ▼
-User opens installed PWA
-    │  Browser compares sw.js byte-by-byte — detects new CACHE_NAME
-    │  Installs new service worker in background
+🏗 Run build.js
+    ├─ Injects LEAVEFLOW_API_URL from GitHub Secrets
+    └─ Stamps sw.js with new CACHE_VERSION timestamp
     │
     ▼
-Toast appears: "App updated — refresh for latest version"
+📤 Upload build artifact
+    │
+    ▼
+🚀 Deploy to GitHub Pages
 ```
 
 ---
 
-## 🛡 Security Notes
+## PWA Configuration
 
-- **No self-registration:** Employees can only log in if their name exists in the `Employees` sheet. Unknown names are rejected.
-- **Admin-only writes:** Only the Admin panel can add new employees (`registerEmployee` action).
-- **No passwords:** Authentication is name-based — suitable for trusted internal teams. For sensitive environments, layer Firebase Auth on top.
-- **CORS & GAS:** The Apps Script endpoint is public (`Anyone` access) but all write operations are scoped to the connected Google Sheet owned by your account.
-- **Local data:** Employee sessions and leave history are cached in `localStorage`. Logging out fully clears this cache.
-
----
-
-## 🧑‍💻 Tech Stack
-
-| Layer | Technology |
+| Property | Value |
 |---|---|
-| Frontend | Vanilla HTML, CSS, JavaScript (ES2020+) |
-| Styling | Custom CSS — glassmorphism, CSS variables, dark mode |
-| PWA | Web App Manifest + Service Worker |
-| Backend | Google Apps Script (serverless, free tier) |
-| Database | Google Sheets (3 tables: Employees, LeaveRecords, Attendance) |
-| Hosting | GitHub Pages (static) |
-| CI/CD | GitHub Actions |
-| Dev server | Node.js / Python 3 (zero dependencies) |
+| Name | LeaveFlow |
+| Display Mode | `standalone` |
+| Theme Color | `#6366f1` (Indigo) |
+| Background Color | `#0a0a0f` |
+| Orientation | `portrait-primary` |
+| Start URL | `./index.html` |
+| Icon Sizes | 72px to 512px (Regular & Maskable) |
+
+### Cache Invalidation Strategy
+The `build.js` script dynamically rewrites the `CACHE_VERSION` constant in `sw.js` with a Unix timestamp. When a device detects a byte-level change in `sw.js`, it automatically installs the new service worker, clears all old caches via a prefix filter (`leaveflow-*`), and takes immediate control using `clients.claim()`.
 
 ---
 
-## 📄 License
+## Future Roadmap
+
+1. **Role-Based Access Control (RBAC):** Integrate Firebase Auth or a simple PIN system to securely lock down the Admin dashboard.
+2. **Push Notifications:** Web Push API integration to notify admins of leave requests and remind users of quota resets.
+3. **Custom Leave Types:** Expand "Leave" to support Sick, Casual, and Unpaid categories.
+4. **Export to CSV/PDF:** Generate downloadable monthly reports directly from the Admin dashboard.
+5. **Localization:** Multi-language support for diverse teams.
+
+---
+
+## Project Structure
+
+```text
+LeaveFlow/
+├── index.html              # Employee PWA entry point
+├── admin.html              # Admin Dashboard
+├── manifest.json           # PWA manifest
+├── sw.js                   # Service Worker (offline, cache invalidation)
+├── build.js                # CI build script
+├── serve.js                # Local dev server (Node.js)
+├── .env                    # Local secrets (API URL)
+│
+├── backend/
+│   └── Code.gs             # Google Apps Script logic
+│
+├── css/
+│   ├── style.css           # Employee app styles
+│   └── admin.css           # Admin dashboard styles
+│
+├── js/
+│   ├── api.js              # Network client
+│   ├── app.js              # Employee logic
+│   └── admin.js            # Admin logic
+│
+├── icons/                  # PWA standard and maskable icons
+└── .github/workflows/      # GitHub Actions CI/CD configuration
+```
+
+---
+
+## License
 
 MIT © [Irfan Habeeb](https://github.com/irfanhabeeb-002)
+
+<div align="center">
+Built for zero-friction team management.
+</div>

@@ -464,20 +464,24 @@ loadEmployeeData(name, forceRefresh=false)
 
 ### Service Worker Lifecycle
 
-```
+```text
 1. INSTALL
    → Pre-caches: index.html, admin.html, all CSS, all JS, manifest, icons
+   → Uses Promise.allSettled to ensure a single 404 doesn't abort install
+   → Calls skipWaiting() for immediate activation
 
 2. ACTIVATE
-   → Deletes old cache versions (by checking CACHE_NAME prefix)
+   → Deletes old cache versions (by checking CACHE_PREFIX 'leaveflow-')
+   → Calls clients.claim() to immediately control all open tabs
 
 3. FETCH intercept
-   → Cache First for all same-origin requests
-   → Falls back to network for non-cached resources
+   → Network First for Google APIs (no caching)
+   → Stale-while-revalidate for HTML Documents (instant load, background fetch)
+   → Cache First for all other static assets (CSS, JS, images)
 
 4. UPDATE DETECTION
    → Browser re-fetches sw.js byte-by-byte on every app load
-   → If sw.js content changed (new CACHE_NAME from build stamp):
+   → If sw.js content changed (new CACHE_VERSION from build stamp):
       → Installs new SW in background
       → Fires 'updatefound' event → app.js shows toast notification
 ```
