@@ -239,10 +239,17 @@ function initSidebar() {
 function navigatePanel(panel) {
   adminState.currentPanel = panel;
 
+  // Sync sidebar nav items
   document.querySelectorAll('.nav-item[data-panel]').forEach(n => {
     const active = n.dataset.panel === panel;
     n.classList.toggle('active', active);
     n.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+
+  // Sync mobile bottom nav items
+  document.querySelectorAll('.mobile-nav-item').forEach(n => {
+    const panelId = n.id.replace('mob-nav-', '');
+    n.classList.toggle('active', panelId === panel);
   });
 
   document.querySelectorAll('.admin-panel').forEach(p => {
@@ -601,5 +608,8 @@ async function init() {
   navigatePanel('overview');
   await loadDashboard();
 }
+
+// Expose navigatePanel globally so onclick attrs in HTML can call it
+window.navigatePanel = navigatePanel;
 
 document.addEventListener('DOMContentLoaded', init);

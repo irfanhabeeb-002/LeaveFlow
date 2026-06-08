@@ -78,7 +78,7 @@ body::before {
   z-index: 1;
 }
 
-/* ── Sidebar ────────────────────────────────────────────── */
+/* ── Sidebar ───────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-w);
   background: var(--bg-surface);
@@ -87,9 +87,10 @@ body::before {
   flex-direction: column;
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  z-index: 50;
+  z-index: 200;           /* MUST be above overlay (199) */
   transition: transform var(--dur-med) var(--ease-out);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-header {
@@ -148,7 +149,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) var(--sp-3);  /* taller tap target */
   border-radius: var(--r-md);
   color: var(--text-secondary);
   font-size: 0.88rem;
@@ -161,6 +162,11 @@ body::before {
   background: none;
   width: 100%;
   text-align: left;
+  position: relative;     /* stacking context above any overlay */
+  z-index: 1;
+  touch-action: manipulation;
+  min-height: 44px;       /* minimum touch target per WCAG */
+  user-select: none;
 }
 
 .nav-item:hover {
@@ -635,23 +641,25 @@ tbody td {
 .admin-empty h3 { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--sp-2); }
 .admin-empty p  { font-size: 0.82rem; }
 
-/* ── Mobile sidebar toggle ──────────────────────────────── */
+/* ── Mobile sidebar toggle ────────────────────────────── */
 .sidebar-toggle {
   display: none;
   position: fixed;
-  bottom: var(--sp-6);
-  right: var(--sp-6);
-  z-index: 60;
-  width: 48px; height: 48px;
+  bottom: calc(var(--sp-6) + 60px); /* above bottom nav */
+  right: var(--sp-5);
+  z-index: 201;           /* above sidebar (200) and overlay (199) */
+  width: 52px; height: 52px;
   background: linear-gradient(135deg, var(--indigo), var(--violet));
   border-radius: var(--r-full);
   border: none;
   color: #fff;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.5);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.55);
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Toast ──────────────────────────────────────────────── */
@@ -683,7 +691,7 @@ tbody td {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 900px) {
   .sidebar {
     transform: translateX(-100%);
@@ -691,27 +699,95 @@ tbody td {
   .sidebar.open {
     transform: translateX(0);
     box-shadow: var(--shadow-lg);
+    z-index: 200; /* explicit reinforcement */
   }
-  .admin-main { margin-left: 0; }
-  .admin-topbar { padding: var(--sp-4) var(--sp-5); }
-  .admin-panel  { padding: var(--sp-5); }
-  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-main {
+    margin-left: 0;
+    padding-bottom: 70px; /* space for mobile bottom nav */
+  }
+  .admin-topbar { padding: var(--sp-3) var(--sp-4); }
+  .admin-panel  { padding: var(--sp-4); gap: var(--sp-5); }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
   .sidebar-toggle { display: flex; }
 
+  /* Overlay: behind sidebar (z:199), blocks background but not sidebar */
   .sidebar-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 49;
+    background: rgba(0,0,0,0.55);
+    z-index: 199;   /* BELOW sidebar (200), ABOVE main content */
+    /* Do NOT set pointer-events:none here — it should close sidebar on tap */
+    cursor: pointer;
   }
   .sidebar-overlay.show { display: block; }
 }
 
+/* Mobile bottom navigation bar — primary nav on small screens */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    z-index: 195;
+    padding: 0 var(--sp-2);
+    align-items: stretch;
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transition: color var(--dur-fast);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: var(--sp-2) 0;
+    min-height: 44px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--indigo-bright);
+  }
+
+  .mobile-nav-item .mobile-nav-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .mobile-nav-item .mobile-nav-label {
+    font-size: 0.58rem;
+  }
+}
+
 @media (max-width: 540px) {
-  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .metrics-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
   .topbar-date { display: none; }
   .table-filter { display: none; }
+  .metric-card { padding: var(--sp-4); }
+  .metric-value { font-size: 1.8rem; }
+  thead th, tbody td { padding: var(--sp-3) var(--sp-4); font-size: 0.82rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

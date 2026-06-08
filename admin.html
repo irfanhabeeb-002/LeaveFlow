@@ -322,6 +322,26 @@
   <!-- Mobile FAB -->
   <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
 
+  <!-- Mobile Bottom Navigation Bar (primary nav on small screens) -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <button class="mobile-nav-item active" id="mob-nav-overview" onclick="navigatePanel('overview')" aria-label="Overview">
+      <span class="mobile-nav-icon">📊</span>
+      <span class="mobile-nav-label">Overview</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-employees" onclick="navigatePanel('employees')" aria-label="Team Members">
+      <span class="mobile-nav-icon">👥</span>
+      <span class="mobile-nav-label">Members</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-history" onclick="navigatePanel('history')" aria-label="Leave History">
+      <span class="mobile-nav-icon">📋</span>
+      <span class="mobile-nav-label">History</span>
+    </button>
+    <button class="mobile-nav-item" id="mob-nav-attendance" onclick="navigatePanel('attendance')" aria-label="Attendance">
+      <span class="mobile-nav-icon">📅</span>
+      <span class="mobile-nav-label">Attendance</span>
+    </button>
+  </nav>
+
   <script src="js/api.js" defer></script>
   <script src="js/admin.js" defer></script>
 </body>
