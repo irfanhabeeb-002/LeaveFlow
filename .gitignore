@@ -1,0 +1,19 @@
+# Environment Variables & Secret Credentials
+.env
+
+# Auto-generated runtime config file
+js/config.js
+
+# Node / npm dependencies
+node_modules/
+package-lock.json
+
+# Python cache & virtual environment directories
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
