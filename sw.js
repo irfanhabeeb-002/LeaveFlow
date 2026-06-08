@@ -1,16 +1,17 @@
 // LeaveFlow Service Worker v1.0
 const CACHE_NAME = 'leaveflow-v1';
-const OFFLINE_URL = '/index.html';
+const OFFLINE_URL = 'index.html';
 
 const STATIC_ASSETS = [
-  '/index.html',
-  '/admin.html',
-  '/css/style.css',
-  '/css/admin.css',
-  '/js/app.js',
-  '/js/api.js',
-  '/js/admin.js',
-  '/manifest.json',
+  'index.html',
+  'admin.html',
+  'css/style.css',
+  'css/admin.css',
+  'js/app.js',
+  'js/api.js',
+  'js/admin.js',
+  'js/config.js',
+  'manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
