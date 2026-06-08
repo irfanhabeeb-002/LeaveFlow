@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="LeaveFlow Admin — Team attendance dashboard" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#6366f1" />
+
+  <title>Admin Dashboard — LeaveFlow</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236366f1'/><text y='.9em' font-size='75' x='12'>🍃</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/css/admin.css" />
+
+  <!-- API URL config (loaded dynamically from .env at runtime) -->
+  <script src="js/config.js"></script>
+</head>
+<body>
+
+  <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+  <div id="sidebar-overlay" class="sidebar-overlay" role="presentation"></div>
+
+  <div class="admin-layout">
+
+    <!-- ══════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════ -->
+    <aside id="sidebar" class="sidebar" role="navigation" aria-label="Admin navigation">
+
+      <div class="sidebar-header">
+        <div class="sidebar-logo" aria-hidden="true">🍃</div>
+        <span class="sidebar-brand">LeaveFlow</span>
+        <span class="sidebar-badge">Admin</span>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Main navigation">
+
+        <span class="nav-section-label">Analytics</span>
+
+        <button
+          class="nav-item active"
+          data-panel="overview"
+          id="nav-overview"
+          aria-current="page"
+        >
+          <span class="nav-icon" aria-hidden="true">📊</span>
+          Overview
+        </button>
+
+        <button
+          class="nav-item"
+          data-panel="employees"
+          id="nav-employees"
+        >
+          <span class="nav-icon" aria-hidden="true">👥</span>
+          Team Members
+        </button>
+
+        <span class="nav-section-label">Records</span>
+
+        <button
+          class="nav-item"
+          data-panel="history"
+          id="nav-history"
+        >
+          <span class="nav-icon" aria-hidden="true">📋</span>
+          Leave History
+        </button>
+
+        <button
+          class="nav-item"
+          data-panel="attendance"
+          id="nav-attendance"
+        >
+          <span class="nav-icon" aria-hidden="true">📅</span>
+          Attendance
+        </button>
+
+      </nav>
+
+      <!-- No footer link here — Employee's View removed -->
+
+    </aside>
+
+    <!-- ══════════════════════════════════════════════
+         MAIN CONTENT
+    ══════════════════════════════════════════════════ -->
+    <div class="admin-main">
+
+      <!-- Top bar -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <h1 id="topbar-title">Dashboard Overview</h1>
+          <p id="topbar-sub">Real-time team attendance snapshot</p>
+        </div>
+        <div class="topbar-right">
+          <div id="topbar-date" class="topbar-date" aria-live="polite"></div>
+
+          <div class="month-nav" role="group" aria-label="Month navigation">
+            <button id="month-prev" class="month-nav-btn" title="Previous month" aria-label="Previous month">‹</button>
+            <span class="month-label" id="month-label-topbar">Loading...</span>
+            <button id="month-next" class="month-nav-btn" title="Next month" aria-label="Next month">›</button>
+          </div>
+
+          <button id="refresh-btn" class="refresh-btn" aria-label="Refresh dashboard data">
+            <span class="refresh-icon" aria-hidden="true">↻</span>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- ══════════════════════════════════════════
+           PANEL 1: Overview
+      ═══════════════════════════════════════════ -->
+      <main id="panel-overview" class="admin-panel active" role="main" aria-label="Overview">
+
+        <!-- Over-quota alert -->
+        <div id="alert-section" class="alert-section" role="alert" aria-live="polite">
+          <div class="alert-title">
+            <span aria-hidden="true">⚠️</span>
+            Employees Exceeding Monthly Leave Quota
+          </div>
+          <div id="alert-employees" class="alert-employees"></div>
+        </div>
+
+        <!-- Metric cards -->
+        <section aria-label="Key metrics">
+          <div class="metrics-grid">
+
+            <div class="metric-card">
+              <div class="metric-icon indigo" aria-hidden="true">👥</div>
+              <p class="metric-label">Total Employees</p>
+              <p id="metric-total-employees" class="metric-value">—</p>
+              <p class="metric-sub">Registered in system</p>
+              <div class="accent-bar" style="background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon amber" aria-hidden="true">🏖</div>
+              <p class="metric-label">On Leave Today</p>
+              <p id="metric-on-leave-today" class="metric-value">—</p>
+              <p class="metric-sub">Out of office right now</p>
+              <div class="accent-bar" style="background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon sky" aria-hidden="true">📊</div>
+              <p class="metric-label">Leaves This Month</p>
+              <p id="metric-total-leaves" class="metric-value">—</p>
+              <p class="metric-sub">Total across team</p>
+              <div class="accent-bar" style="background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon green" aria-hidden="true">🎯</div>
+              <p class="metric-label">Avg Balance</p>
+              <p id="metric-avg-balance" class="metric-value">—</p>
+              <p class="metric-sub">Avg leaves remaining</p>
+              <div class="accent-bar" style="background:linear-gradient(90deg,#10b981,#059669)"></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-icon red" aria-hidden="true">🚨</div>
+              <p class="metric-label">Over Quota</p>
+              <p id="metric-over-quota" class="metric-value">—</p>
+              <p class="metric-sub">Exceeded 4 leaves/month</p>
+              <div class="accent-bar" style="background:linear-gradient(90deg,#ef4444,#dc2626)"></div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Employees on leave TODAY -->
+        <section class="table-section" aria-label="Employees on leave today">
+          <div class="table-header">
+            <div class="table-title">
+              Employees on Leave Today
+              <span class="table-count" id="today-leaves-count" aria-live="polite">0</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table role="table" aria-label="Employees on leave today">
+              <thead>
+                <tr>
+                  <th scope="col">Employee</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="today-leaves-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ══════════════════════════════════════════
+           PANEL 2: Team Members
+      ═══════════════════════════════════════════ -->
+      <section id="panel-employees" class="admin-panel" role="main" aria-label="Team members">
+
+        <div class="table-section">
+          <div class="table-header">
+            <div class="table-title">
+              Team Members
+              <span class="table-count" id="employees-count" aria-live="polite">—</span>
+            </div>
+            <div class="table-actions">
+              <button id="add-member-btn" class="btn btn-primary">
+                ➕ Add Member
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table role="table" aria-label="Team members and leave balances">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Leave Usage</th>
+                  <th scope="col">Remaining</th>
+                </tr>
+              </thead>
+              <tbody id="employees-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══════════════════════════════════════════
+           PANEL 3: Leave History
+      ═══════════════════════════════════════════ -->
+      <section id="panel-history" class="admin-panel" role="main" aria-label="Leave history">
+
+        <div class="table-section">
+          <div class="table-header">
+            <div class="table-title">
+              Leave Records
+              <span class="table-count" id="history-count" aria-live="polite">—</span>
+            </div>
+            <div class="table-actions">
+              <select id="history-filter" class="table-filter" aria-label="Filter by employee">
+                <option value="">All employees</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table role="table" aria-label="Leave history records">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Employee</th>
+                  <th scope="col">Type</th>
+                </tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══════════════════════════════════════════
+           PANEL 4: Attendance
+      ═══════════════════════════════════════════ -->
+      <section id="panel-attendance" class="admin-panel" role="main" aria-label="Attendance report">
+
+        <div class="table-section">
+          <div class="table-header">
+            <div class="table-title">
+              Monthly Attendance Summary
+              <span class="table-count" id="attendance-count" aria-live="polite">—</span>
+            </div>
+            <div class="month-nav table-actions" role="group" aria-label="Month navigation">
+              <span class="month-label">Loading...</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table role="table" aria-label="Attendance summary by employee">
+              <thead>
+                <tr>
+                  <th scope="col">Employee</th>
+                  <th scope="col">Working Days</th>
+                  <th scope="col">Present</th>
+                  <th scope="col">On Leave</th>
+                  <th scope="col">Attendance %</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </div><!-- /.admin-main -->
+  </div><!-- /.admin-layout -->
+
+  <!-- Add Member Modal -->
+  <div id="add-member-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-member-title">
+    <div class="modal-sheet">
+      <h2 class="modal-title" id="add-member-title">Add Team Member</h2>
+      <p class="modal-subtitle">Register a new employee. Once added, they will be able to log in to the employee app.</p>
+      <form id="add-member-form" novalidate>
+        <div class="input-wrap">
+          <label for="new-member-name">Full Name</label>
+          <input type="text" id="new-member-name" placeholder="e.g. Priya Sharma" autocomplete="off" required minlength="2" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-add-member-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="confirm-add-member-btn" class="btn btn-primary">
+            <span class="btn-text">Add Member</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mobile FAB -->
+  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
+
+  <script src="/js/api.js" defer></script>
+  <script src="/js/admin.js" defer></script>
+</body>
+</html>

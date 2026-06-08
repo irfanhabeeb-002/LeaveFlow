@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="LeaveFlow — Effortless leave management. Present by default." />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LeaveFlow" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="LeaveFlow" />
+  <meta property="og:description" content="Effortless leave management. Present by default." />
+  <meta property="og:type" content="website" />
+
+  <title>LeaveFlow — Leave Tracker</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%236366f1'/><text y='.9em' font-size='75' x='12'>🍃</text></svg>" />
+
+  <!-- Fonts preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <!-- API URL config (loaded dynamically from .env at runtime) -->
+  <script src="js/config.js"></script>
+</head>
+<body>
+  <!-- Offline banner -->
+  <div class="offline-banner" role="status" aria-live="polite">
+    📡 You're offline — leaves will sync when connection is restored
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- App root -->
+  <div id="app">
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 1: Onboarding (first launch only)
+    ══════════════════════════════════════════════════ -->
+    <section id="screen-onboarding" class="screen" role="main" aria-label="Welcome">
+      <div class="onboarding-logo" aria-hidden="true">🍃</div>
+
+      <h1 class="onboarding-title">LeaveFlow</h1>
+      <p class="onboarding-subtitle">
+        You're present by default.<br />
+        Only tell us when you're away.
+      </p>
+
+      <div class="onboarding-card">
+        <h2>Welcome aboard</h2>
+        <p>Enter your name once and you're all set — no passwords, no hassle.</p>
+
+        <form id="onboarding-form" novalidate>
+          <div class="field">
+            <label for="employee-name-input">Your full name</label>
+            <input
+              type="text"
+              id="employee-name-input"
+              name="name"
+              placeholder="e.g. Priya Sharma"
+              autocomplete="name"
+              autocapitalize="words"
+              required
+              minlength="2"
+              maxlength="60"
+              aria-required="true"
+              aria-describedby="name-hint"
+            />
+          </div>
+          <p id="name-hint" class="visually-hidden">Enter your first and last name as it appears in the team roster.</p>
+
+          <button type="submit" id="register-btn" class="btn btn-primary">
+            <span class="btn-text">Get Started</span>
+            <div class="spinner" aria-hidden="true"></div>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 2: Home (main employee view)
+    ══════════════════════════════════════════════════ -->
+    <section id="screen-home" class="screen" role="main" aria-label="Home">
+
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-brand">
+          <div class="header-logo" aria-hidden="true">🍃</div>
+          <span class="header-title">LeaveFlow</span>
+        </div>
+        <div class="header-actions">
+          <button
+            id="install-btn"
+            class="icon-btn hidden"
+            title="Install App"
+            aria-label="Install LeaveFlow app"
+          >⬇️</button>
+          <button
+            id="logout-btn"
+            class="icon-btn"
+            title="Log Out"
+            aria-label="Log out of LeaveFlow"
+          >🚪</button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="home-content">
+
+        <!-- Greeting -->
+        <div class="greeting" aria-live="polite">
+          <p class="greeting-date" id="greeting-date">Today</p>
+          <h1 class="greeting-name" id="greeting-name">Loading...</h1>
+          <div id="today-status" class="status-badge present" role="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            Present Today
+          </div>
+        </div>
+
+        <!-- Leave balance ring + stats -->
+        <div class="balance-visual">
+          <div class="ring-wrap" role="img" aria-label="Leave balance ring">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <defs>
+                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="32" cy="32" r="26"/>
+              <circle id="ring-fg" class="ring-fg" cx="32" cy="32" r="26"/>
+            </svg>
+            <div class="ring-text">
+              <span id="ring-value">4</span>
+              <small>left</small>
+            </div>
+          </div>
+          <div class="balance-info">
+            <p class="balance-title" id="balance-title">4 leaves remaining</p>
+            <p class="balance-sub" id="balance-sub">You've used 0 of 4 leaves this month. Resets on the 1st.</p>
+          </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="stats-grid" role="group" aria-label="Leave statistics">
+          <div class="stat-card">
+            <p class="stat-label">Leaves Remaining</p>
+            <p id="stat-remaining" class="stat-value accent">4</p>
+            <p class="stat-sub">This month</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Leaves Used</p>
+            <p id="stat-used" class="stat-value">0</p>
+            <p class="stat-sub">This month</p>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+          <button id="take-leave-btn" class="btn-take-leave" aria-haspopup="dialog" aria-controls="modal-overlay">
+            <span class="btn-leave-icon" aria-hidden="true">🏖</span>
+            Take Leave
+          </button>
+          <div id="on-leave-note" class="on-leave-note hidden" role="status">
+            <span aria-hidden="true">✅</span>
+            Your leave for today is already recorded
+          </div>
+        </div>
+
+        <!-- Recent history -->
+        <section aria-label="Recent leave history">
+          <div class="section-header">
+            <h2 class="section-title">Recent Leaves</h2>
+          </div>
+          <div id="history-list" class="history-list" role="list" aria-live="polite">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">🌿</div>
+              <p>No leaves taken this month</p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </section>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 3: Success confirmation
+    ══════════════════════════════════════════════════ -->
+    <section id="screen-success" class="screen" role="main" aria-label="Leave recorded">
+      <div class="success-icon-wrap" aria-hidden="true">✅</div>
+
+      <h1 class="success-title">Leave Recorded</h1>
+      <p class="success-subtitle">Your leave has been saved and attendance updated.</p>
+
+      <div class="success-details" role="region" aria-label="Leave summary">
+        <div class="detail-row">
+          <span class="detail-key">Date</span>
+          <span class="detail-val" id="success-date">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Leaves Used</span>
+          <span class="detail-val" id="success-used">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Leaves Remaining</span>
+          <span class="detail-val green" id="success-remaining">—</span>
+        </div>
+      </div>
+
+      <button id="back-home-btn" class="btn btn-primary" style="max-width:340px;width:100%">
+        Back to Home
+      </button>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- ══════════════════════════════════════════════
+       Leave Submission Modal (bottom sheet on mobile)
+  ══════════════════════════════════════════════════ -->
+  <div
+    id="modal-overlay"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title"
+    aria-describedby="modal-subtitle"
+  >
+    <div id="leave-modal" class="modal-sheet">
+      <div class="modal-handle" aria-hidden="true"></div>
+
+      <h2 class="modal-title" id="modal-title">Record Leave</h2>
+      <p class="modal-subtitle" id="modal-subtitle">
+        Select the date you'll be away. Weekends are excluded automatically.
+      </p>
+
+      <div class="date-input-wrap">
+        <input
+          type="date"
+          id="leave-date-input"
+          aria-label="Leave date"
+          aria-required="true"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="modal-actions">
+        <button id="cancel-leave-btn" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="confirm-leave-btn" class="btn btn-primary" type="button">
+          <span class="btn-text">Confirm Leave</span>
+          <div class="spinner" aria-hidden="true"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js" defer></script>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
