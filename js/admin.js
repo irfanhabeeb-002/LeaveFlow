@@ -187,6 +187,7 @@ async function loadDashboard() {
   try {
     let result;
     if (API.isConfigured() && navigator.onLine) {
+      // Add cache-busting _t param so browser doesn't serve stale GAS responses
       result = await API.getDashboardData(adminState.currentMonth);
     } else {
       result = readLocalData(adminState.currentMonth);
@@ -428,8 +429,9 @@ function renderHistory(data) {
 
 function applyHistoryFilter(leaves, name) {
   const tbody   = $('history-body');
+  const nameLower = (name || '').toLowerCase().trim();
   const sorted  = [...leaves]
-    .filter(l => !name || l.employeeName === name)
+    .filter(l => !nameLower || (l.employeeName || '').toLowerCase() === nameLower)
     .sort((a, b) => b.date.localeCompare(a.date));
 
   $('history-count').textContent = sorted.length;

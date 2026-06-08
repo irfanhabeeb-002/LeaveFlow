@@ -21,6 +21,8 @@ const API = (() => {
 
     const url = new URL(BASE_URL);
     url.searchParams.set('action', action);
+    // Cache-busting: prevents browser/CDN from serving stale GAS responses
+    url.searchParams.set('_t', Date.now().toString());
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
     const controller = new AbortController();
@@ -30,6 +32,7 @@ const API = (() => {
       const res = await fetch(url.toString(), {
         method: 'GET',
         signal: controller.signal,
+        cache: 'no-store',  // force browser to always make a real network request
         headers: { 'Accept': 'application/json' }
       });
 

@@ -240,6 +240,8 @@ function initOnboarding() {
           leaveHistory: res.leaveHistory || [],
           status: res.employee?.status || 'Present'
         };
+        // Force-save as fresh (clear stale timestamp)
+        localStorage.setItem(STORAGE.LAST_FETCH, Date.now().toString());
         saveEmployeeData(data);
         state.employeeData = data;
         applyEmployeeData(data);
@@ -521,28 +523,41 @@ async function submitLeave(date) {
       addPendingLeave(name, date);
       result = computeOptimisticResult(date);
       showToast('Leave queued — will sync when online', 'info');
+
+      // Optimistic update using local data
+      const data = state.employeeData || {};
+      const newHistory = [...(data.leaveHistory || []), { date, type: 'Leave' }];
+      const updatedData = {
+        ...data,
+        leavesUsed: result.leavesUsed,
+        leavesRemaining: result.leavesRemaining,
+        leaveHistory: newHistory
+      };
+      saveEmployeeData(updatedData);
+      applyEmployeeData(updatedData);
+      showSuccessScreen(date, result.leavesUsed, result.leavesRemaining);
     } else {
       result = await API.submitLeave(name, date);
+
+      // Use server-authoritative leaveHistory if returned (preferred),
+      // otherwise fall back to optimistic append (avoids client-side duplication)
+      const data = state.employeeData || {};
+      const serverHistory = result.leaveHistory || null;
+      const newHistory = serverHistory
+        ? serverHistory  // trust the server
+        : [...(data.leaveHistory || []), { date, type: 'Leave' }];
+
+      const updatedData = {
+        ...data,
+        leavesUsed: result.leavesUsed ?? (data.leavesUsed || 0) + 1,
+        leavesRemaining: result.leavesRemaining ?? Math.max(0, (data.leavesRemaining ?? 4) - 1),
+        leaveHistory: newHistory,
+        status: 'On Leave'
+      };
+      saveEmployeeData(updatedData);
+      applyEmployeeData(updatedData);
+      showSuccessScreen(date, updatedData.leavesUsed, updatedData.leavesRemaining);
     }
-
-    // Update local cache optimistically
-    const data = state.employeeData || {};
-    const newHistory = [...(data.leaveHistory || []), { date, type: 'Leave' }];
-    const newUsed      = (data.leavesUsed || 0) + 1;
-    const newRemaining = Math.max(0, (data.leavesRemaining ?? MONTHLY_LEAVES) - 1);
-
-    const updatedData = {
-      ...data,
-      leavesUsed: result.leavesUsed ?? newUsed,
-      leavesRemaining: result.leavesRemaining ?? newRemaining,
-      leaveHistory: newHistory
-    };
-    saveEmployeeData(updatedData);
-    applyEmployeeData(updatedData);
-
-    // Show success screen
-    showSuccessScreen(date, result.leavesUsed ?? newUsed, result.leavesRemaining ?? newRemaining);
-
   } catch (err) {
     showToast(err.message || 'Failed to record leave. Please try again.', 'error');
   } finally {
@@ -630,10 +645,10 @@ function initLogout() {
       }
     }
     
-    // Clear employee name, data, cache, and queue
+    // Clear ALL local state so the next login always fetches fresh from server
     localStorage.removeItem(STORAGE.EMPLOYEE_NAME);
     localStorage.removeItem(STORAGE.EMPLOYEE_DATA);
-    localStorage.removeItem(STORAGE.LAST_FETCH);
+    localStorage.removeItem(STORAGE.LAST_FETCH);   // force re-fetch on next login
     localStorage.removeItem(STORAGE.PENDING);
     
     state.employeeName = null;

@@ -119,6 +119,7 @@ function doGet(e) {
       case 'getAllEmployees':      result = getAllEmployees();                                 break;
       case 'getLeaveHistory':     result = getLeaveHistory(p.month, p.employeeName || '');   break;
       case 'getAttendanceSummary':result = getAttendanceSummary(p.month);                    break;
+      case 'cleanup':             cleanupDuplicateRows(); result = { success: true };        break;
       case 'setup':               setupSheets(); result = { success: true };                 break;
       default:                    result = { error: 'Unknown action: ' + p.action };
     }
@@ -270,18 +271,24 @@ function submitLeave(name, date) {
   let empRow = findEmployeeRow(empSheet, name);
   if (!empRow) throw new Error('Employee not found in organization directory');
 
+  // First, clean up any pre-existing duplicate rows for this employee+date
+  // This prevents the rare race condition where two requests come in simultaneously
+  cleanupDuplicateRows();
+
   // Duplicate check using readDate() so format matches
   const lrData = lrSheet.getDataRange().getValues();
   for (let i = 1; i < lrData.length; i++) {
     const rowDate = readDate(lrData[i][0]);   // safe date read
     const rowEmp  = String(lrData[i][1]).trim().toLowerCase();
     if (rowEmp === name.toLowerCase() && rowDate === date) {
+      // Already exists — return current balance without adding again
       const freshData = getEmployeeData(name);
       return {
         success: true, duplicate: true,
         message: 'Leave already recorded for this date',
         leavesUsed:      freshData.employee.leavesUsed,
-        leavesRemaining: freshData.employee.leavesRemaining
+        leavesRemaining: freshData.employee.leavesRemaining,
+        leaveHistory:    freshData.leaveHistory
       };
     }
   }
@@ -296,10 +303,51 @@ function submitLeave(name, date) {
   return { 
     success: true, 
     leavesUsed: freshData.employee.leavesUsed, 
-    leavesRemaining: freshData.employee.leavesRemaining, 
+    leavesRemaining: freshData.employee.leavesRemaining,
+    leaveHistory: freshData.leaveHistory,
     date, 
     employeeName: name 
   };
+}
+
+// ── CLEANUP DUPLICATE ROWS ─────────────────────────────────────
+// Removes duplicate rows from LeaveRecords and Attendance sheets.
+// A row is a duplicate if the same (employee, date) already appears earlier.
+function cleanupDuplicateRows() {
+  // Clean LeaveRecords
+  const lrSheet = getSheet(CONFIG.SHEETS.LEAVE_RECORDS);
+  const lrData  = lrSheet.getDataRange().getValues();
+  const lrSeen  = new Set();
+  // Iterate from bottom up so we can delete rows without index shifting
+  for (let i = lrData.length - 1; i >= 1; i--) {
+    const date = readDate(lrData[i][0]);
+    const emp  = String(lrData[i][1]).trim().toLowerCase();
+    if (!date || !emp) continue;
+    const key = `${emp}|${date}`;
+    if (lrSeen.has(key)) {
+      lrSheet.deleteRow(i + 1);  // +1 because sheet rows are 1-indexed
+    } else {
+      lrSeen.add(key);
+    }
+  }
+
+  // Clean Attendance
+  const attSheet = getSheet(CONFIG.SHEETS.ATTENDANCE);
+  const attData  = attSheet.getDataRange().getValues();
+  const attSeen  = new Set();
+  for (let i = attData.length - 1; i >= 1; i--) {
+    const date = readDate(attData[i][0]);
+    const emp  = String(attData[i][1]).trim().toLowerCase();
+    if (!date || !emp) continue;
+    const key = `${emp}|${date}`;
+    if (attSeen.has(key)) {
+      attSheet.deleteRow(i + 1);
+    } else {
+      attSeen.add(key);
+    }
+  }
+
+  Logger.log('Cleanup complete.');
 }
 
 function updateAttendanceRecord(attSheet, date, name, status) {
