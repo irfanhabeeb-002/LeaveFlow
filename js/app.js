@@ -358,12 +358,12 @@ function applyEmployeeData(data) {
   $('greeting-date').textContent = todayLabel();
   $('greeting-name').innerHTML = `${greetingText()}, <span>${firstName}</span> 👋`;
 
-  // Status badge
+  // Status badge — only based on today's date in leaveHistory, never stale cached status
   const today = todayISO();
   const isOnLeaveToday = leaveHistory.some(l => l.date === today);
   const statusEl = $('today-status');
 
-  if (isOnLeaveToday || data.status === 'On Leave') {
+  if (isOnLeaveToday) {
     statusEl.className = 'status-badge on-leave';
     statusEl.innerHTML = `<span class="status-dot"></span> On Leave Today`;
   } else {
@@ -392,7 +392,7 @@ function applyEmployeeData(data) {
     ? 'You have taken more leaves than your monthly quota. Additional leaves are recorded.'
     : `You've used ${used} of ${MONTHLY_LEAVES} leaves this month. Resets on the 1st.`;
 
-  // CTA state
+  // CTA state — show Take Leave button only if NOT on leave today
   const takeLeavBtn = $('take-leave-btn');
   const onLeaveNote = $('on-leave-note');
 
