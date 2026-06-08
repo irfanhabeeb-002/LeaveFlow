@@ -1,0 +1,7 @@
+# LeaveFlow Development Requirements
+# ============================================================
+# The local development server (serve.py) uses only python built-in standard libraries
+# (os, http.server, socketserver). No third-party pip libraries are required.
+#
+# To run the development server, simply execute:
+#   python3 serve.py
